@@ -23,8 +23,7 @@ const storage = new ApiSpecStorage();
 // Create the MCP server
 const server = new McpServer({
   name: 'typespec-mcp-server',
-  version: '1.0.0',
-  description: 'A TypeSpec-powered Model Context Protocol server for API specification and validation'
+  version: '1.0.0'
 }, {
   capabilities: {
     tools: {},
@@ -146,7 +145,7 @@ server.registerTool(
       const spec = await storage.createSpec({
         name,
         version,
-        description,
+        description: description ?? undefined,
         typespecSource
       });
 
@@ -256,67 +255,6 @@ server.registerTool(
 );
 
 /**
- * Tool: Compile stored API specification
- */
-server.registerTool(
-  'compile-stored-spec',
-  {
-    description: 'Compile a stored API specification to OpenAPI',
-    inputSchema: {
-      id: z.string().describe('ID of the API specification to compile'),
-      outputFormat: z.enum(['openapi3', 'json-schema']).default('openapi3').describe('Output format')
-    }
-  },
-  async ({ id, outputFormat }): Promise<CallToolResult> => {
-    try {
-      const spec = await storage.getSpec(id);
-      if (!spec) {
-        return {
-          content: [{
-            type: 'text',
-            text: `API specification with ID "${id}" not found.`
-          }],
-          isError: true
-        };
-      }
-
-      const compiler = createTypeSpecCompiler();
-      const result = await compiler.compile(spec.typespecSource, { outputFormat });
-
-      if (!result.success) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Compilation failed for "${spec.name}":\n${result.errors?.join('\n') || 'Unknown error'}`
-          }],
-          isError: true
-        };
-      }
-
-      // Update the spec with compiled output
-      await storage.updateSpec(id, {
-        openApiSpec: result.output
-      });
-
-      return {
-        content: [{
-          type: 'text',
-          text: `Compilation successful for "${spec.name}"!\n\nResult:\n${JSON.stringify(result.output, null, 2)}`
-        }]
-      };
-    } catch (error) {
-      return {
-        content: [{
-          type: 'text',
-          text: `Error compiling API specification: ${error instanceof Error ? error.message : String(error)}`
-        }],
-        isError: true
-      };
-    }
-  }
-);
-
-/**
  * Tool: Generate TypeSpec template
  */
 server.registerTool(
@@ -393,15 +331,6 @@ model Item {
   updatedAt: utcDateTime;
 }
 
-@doc("Request to create an item")
-model CreateItemRequest {
-  @doc("Item name")
-  name: string;
-  
-  @doc("Item description")
-  description?: string;
-}
-
 @route("/items")
 interface Items {
   @get
@@ -410,27 +339,16 @@ interface Items {
   
   @post
   @doc("Create a new item")
-  create(@body item: CreateItemRequest): Item | ErrorResponse;
+  create(@body item: { name: string, description?: string }): Item | ErrorResponse;
   
   @get
   @route("/{id}")
   @doc("Get item by ID")
   get(@path id: string): Item | ErrorResponse;
-  
-  @put
-  @route("/{id}")
-  @doc("Update an item")
-  update(@path id: string, @body item: CreateItemRequest): Item | ErrorResponse;
-  
-  @delete
-  @route("/{id}")
-  @doc("Delete an item")
-  delete(@path id: string): void | ErrorResponse;
 }`,
 
       'crud-service': `import "@typespec/http";
 import "@typespec/rest";
-import "@typespec/openapi3";
 
 using TypeSpec.Http;
 using TypeSpec.Rest;
@@ -438,7 +356,7 @@ using TypeSpec.Rest;
 @service({
   title: "${serviceName}",
   version: "${version}",
-  description: "CRUD service with advanced features"
+  description: "Full CRUD service with advanced features"
 })
 namespace ${serviceName.replace(/[^a-zA-Z0-9]/g, '')};
 
@@ -468,9 +386,6 @@ model PaginatedResponse<T> {
     
     @doc("Total number of items")
     total: int32;
-    
-    @doc("Total number of pages")
-    totalPages: int32;
   };
 }
 
@@ -485,9 +400,6 @@ model ErrorResponse {
   
   @doc("Error details")
   details?: {};
-  
-  @doc("Timestamp of error")
-  timestamp: utcDateTime;
 }
 
 @doc("Resource entity")
@@ -504,33 +416,22 @@ model Resource {
   @doc("Resource status")
   status: "active" | "inactive" | "pending";
   
-  @doc("Resource tags")
-  tags?: string[];
-  
   @doc("Creation timestamp")
   createdAt: utcDateTime;
-  
-  @doc("Last update timestamp")
-  updatedAt: utcDateTime;
 }
 
 @route("/api/v1/resources")
 interface ResourcesAPI {
   @get
-  @doc("List resources with pagination and filtering")
-  list(
-    ...PaginationParams,
-    @query status?: "active" | "inactive" | "pending",
-    @query search?: string
-  ): PaginatedResponse<Resource> | ErrorResponse;
+  @doc("List resources with pagination")
+  list(...PaginationParams): PaginatedResponse<Resource> | ErrorResponse;
   
   @post
   @doc("Create a new resource")
   create(@body resource: {
     name: string,
     description?: string,
-    status?: "active" | "inactive" | "pending",
-    tags?: string[]
+    status?: "active" | "inactive" | "pending"
   }): Resource | ErrorResponse;
   
   @get
@@ -542,16 +443,6 @@ interface ResourcesAPI {
   @route("/{id}")
   @doc("Update a resource")
   update(@path id: string, @body resource: {
-    name?: string,
-    description?: string,
-    status?: "active" | "inactive" | "pending",
-    tags?: string[]
-  }): Resource | ErrorResponse;
-  
-  @patch
-  @route("/{id}")
-  @doc("Partially update a resource")
-  patch(@path id: string, @body patch: {
     name?: string,
     description?: string,
     status?: "active" | "inactive" | "pending"
@@ -627,7 +518,6 @@ This MCP server provides the following tools:
 - \`create-api-spec\`: Store API specifications
 - \`list-api-specs\`: List stored specifications
 - \`get-api-spec\`: Retrieve specific specification
-- \`compile-stored-spec\`: Compile stored specifications
 - \`generate-typespec-template\`: Generate templates
 
 ## Learn More

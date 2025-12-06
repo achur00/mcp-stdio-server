@@ -115,11 +115,14 @@ export class ApiSpecStorage {
       id: randomUUID(),
       name: request.name,
       version: request.version,
-      description: request.description,
       typespecSource: request.typespecSource,
       createdAt: now,
       updatedAt: now
     };
+    
+    if (request.description !== undefined) {
+      spec.description = request.description;
+    }
 
     this.specs.set(spec.id, spec);
     await this.saveToDisk(spec);
@@ -204,7 +207,7 @@ export class ApiSpecStorage {
 
     // Sort by version (simple string comparison, could be enhanced with semver)
     specs.sort((a, b) => b.version.localeCompare(a.version));
-    return specs[0];
+    return specs[0] || null;
   }
 
   /**
@@ -228,11 +231,18 @@ export class ApiSpecStorage {
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
-    return {
+    const result: { totalSpecs: number; totalSize: number; oldestSpec?: string; newestSpec?: string } = {
       totalSpecs,
-      totalSize,
-      oldestSpec: sorted[0]?.createdAt,
-      newestSpec: sorted[sorted.length - 1]?.createdAt
+      totalSize
     };
+
+    if (sorted[0]) {
+      result.oldestSpec = sorted[0].createdAt;
+    }
+    if (sorted[sorted.length - 1]) {
+      result.newestSpec = sorted[sorted.length - 1].createdAt;
+    }
+
+    return result;
   }
 }

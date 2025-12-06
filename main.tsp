@@ -6,9 +6,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 
 @service({
-  title: "TypeSpec MCP API",
-  version: "1.0.0",
-  description: "A TypeSpec-powered Model Context Protocol server for API specification and validation"
+  title: "TypeSpec MCP API"
 })
 namespace TypeSpecMcpApi;
 

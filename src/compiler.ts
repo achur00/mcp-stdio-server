@@ -151,7 +151,7 @@ options:
 
       return {
         success: basicErrors.length === 0,
-        errors: basicErrors.length > 0 ? basicErrors : undefined
+        ...(basicErrors.length > 0 && { errors: basicErrors })
       };
 
     } catch (error) {
