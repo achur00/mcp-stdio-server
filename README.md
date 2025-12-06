@@ -8,7 +8,7 @@ A Model Context Protocol (MCP) server that provides TypeSpec compilation and API
 - **Validation**: Validate TypeSpec syntax and semantics
 - **API Specification Management**: Store, retrieve, and manage API specifications
 - **Template Generation**: Generate TypeSpec templates for common API patterns
-- **JSON Schema Support**: Generate JSON schemas from TypeSpec models
+- **OpenAPI Output**: Generate OpenAPI 3.0 specifications from TypeSpec models
 
 ## Available Tools
 
@@ -21,7 +21,6 @@ A Model Context Protocol (MCP) server that provides TypeSpec compilation and API
 - `create-api-spec` - Create and store a new API specification
 - `list-api-specs` - List all stored API specifications  
 - `get-api-spec` - Retrieve a specific API specification
-- `compile-stored-spec` - Compile a stored specification
 
 ## Resources
 
@@ -88,8 +87,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 
 @service({
-  title: "My API",
-  version: "1.0.0"
+  title: "My API"
 })
 namespace MyAPI;
 
@@ -116,8 +114,7 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 
 @service({
-  title: "Advanced API",
-  version: "1.0.0"
+  title: "Advanced API"
 })
 namespace AdvancedAPI;
 
@@ -210,7 +207,6 @@ Use the `generate-typespec-template` tool:
 - **@modelcontextprotocol/sdk** - MCP server implementation
 - **@typespec/compiler** - TypeSpec compiler core
 - **@typespec/openapi3** - OpenAPI 3.0 emitter
-- **@typespec/json-schema** - JSON Schema emitter
 - **@typespec/http** - HTTP protocol support
 - **@typespec/rest** - REST API conventions
 - **zod** - Schema validation
